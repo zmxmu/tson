@@ -1,4 +1,4 @@
-package com.zyao89.demoabstractprocessor;
+package com.syswin.mson;
 
 import com.syswin.Tson.annotation.JsonField;
 import com.syswin.Tson.annotation.JsonIgnore;

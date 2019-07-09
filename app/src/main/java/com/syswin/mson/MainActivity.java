@@ -1,7 +1,8 @@
-package com.zyao89.demoabstractprocessor;
+package com.syswin.mson;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+
 //import com.zyao89.demoprocessor.auto.Zyao$$ZYAO;
 
 public class MainActivity extends AppCompatActivity

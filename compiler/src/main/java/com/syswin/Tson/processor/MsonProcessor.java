@@ -1,7 +1,9 @@
 package com.syswin.Tson.processor;
 
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import com.syswin.Tson.annotation.JsonType;
 
@@ -14,6 +16,7 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -24,8 +27,9 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-@AutoService(javax.annotation.processing.Processor.class)
-public class Processor extends AbstractProcessor
+
+@AutoService(Processor.class)
+public class MsonProcessor extends AbstractProcessor
 {
     private Types mTypeUtils;
     private Elements mElementUtils;
@@ -63,12 +67,11 @@ public class Processor extends AbstractProcessor
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment)
     {//这里开始处理我们的注解解析了，以及生成Java文件
-        //Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(JsonType.class);
-        TypeSpec.Builder builder = (TypeSpec.Builder) TypeSpec.classBuilder("TSON")
-                .addModifiers(Modifier.PUBLIC);
-//        for(Element element:elements){
-//             processElement(element,builder);
-//        }
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(JsonType.class);
+        TypeSpec.Builder builder = (TypeSpec.Builder) TypeSpec.classBuilder("TSON");
+        for(Element element:elements){
+             processElement(element,builder);
+        }
         try {
             JavaFile.builder("com.syswin.tson.processor.TsonProcessor", builder.build()).build().writeTo(mFiler);
         } catch (IOException e) {
@@ -77,45 +80,15 @@ public class Processor extends AbstractProcessor
         return true;
     }
 
-    private static final String SUFFIX = "$$ZYAO";
+    private void processElement(Element element,TypeSpec.Builder builder) {
 
-    private void analysisAnnotated(Element classElement)
-    {
-        JsonType annotation = classElement.getAnnotation(JsonType.class);
-        String name = annotation.value();
-
-//        TypeElement superClassName = mElementUtils.getTypeElement(name);
-        String newClassName = name + SUFFIX;
-
-        StringBuilder builder = new StringBuilder()
-                .append("package com.zyao89.demoprocessor.auto;\n\n")
-                .append("public class ")
-                .append(newClassName)
-                .append(" {\n\n") // open class
-                .append("\tpublic String getMessage() {\n") // open method
-                .append("\t\treturn \"");
-
-        // this is appending to the return statement
-        builder.append(name).append(" !\\n");
-
-
-        builder.append("\";\n") // end return
-                .append("\t}\n") // close method
-                .append("}\n"); // close class
-
-
-        try { // write the file
-            JavaFileObject source = mFiler.createSourceFile("com.zyao89.demoprocessor.auto."+newClassName);
-            Writer writer = source.openWriter();
-            writer.write(builder.toString());
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            // Note: calling e.printStackTrace() will print IO errors
-            // that occur from the file already existing after its first run, this is normal
-        }
-
-        info(">>> analysisAnnotated is finish... <<<");
+        MethodSpec.Builder toJsonMethodBuilder =
+                MethodSpec.methodBuilder("toJson").addModifiers(Modifier.PUBLIC,
+                        Modifier.STATIC).returns(String.class);
+        toJsonMethodBuilder.addStatement("return $T.class.getCanonicalName()", ClassName.get
+                ((TypeElement) element));
+        builder.addMethod(toJsonMethodBuilder.build())
+                .addModifiers(Modifier.PUBLIC);
     }
 
     private void error(Element e, String msg, Object... args) {
